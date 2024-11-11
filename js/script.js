@@ -1,5 +1,16 @@
 const global = {
-    currentPage: window.location.pathname,
+  currentPage: window.location.pathname,
+  search: {
+    term: '',
+    type: '',
+    page: 1,
+    totalPages: 1
+  },
+
+  api: {
+    apiKey: 'bd406a984ea7656e6fc591a0f3ec87a1',
+    apiUrl: 'https://api.themoviedb.org/3/'
+  }
 };
 
 //Fetch data from TMDB API and add to DOM
@@ -215,6 +226,23 @@ function displayBackgroundImage(type, backgroundPath) {
   }
 }
 
+
+//Search Movie or Show
+async function search() {
+  const queryString = window.location.search;
+  const urlParams = new URLSearchParams(queryString);
+  global.search.type = urlParams.get('type');
+  global.search.term = urlParams.get('search-term');
+  if (global.search.term !== '' && global.search.term !== null) {
+    const results = await searchAPIData();
+    console.log(results);
+  } else {
+    showAlert('Please enter a search term');
+}
+
+}
+
+
 //Display slider movies
 async function displaySlider() {
   const { results } = await fetchAPIData('movie/now_playing');
@@ -265,8 +293,8 @@ function initSwiper() {
 }
 
 async function fetchAPIData(endpoint) {
-    const API_KEY = 'bd406a984ea7656e6fc591a0f3ec87a1';
-    const API_URL = 'https://api.themoviedb.org/3/';
+    const API_KEY = global.api.apiKey;
+    const API_URL = global.api.apiUrl;
 
     showSpinner();
 
@@ -276,6 +304,21 @@ async function fetchAPIData(endpoint) {
    hideSpinner();
 
     return data;
+}
+
+//Make request to search
+async function searchAPIData(endpoint) {
+  const API_KEY = global.api.apiKey;
+  const API_URL = global.api.apiUrl;
+
+  showSpinner();
+
+  const response = await fetch(`${API_URL}search/${global.search.type}?api_key=${API_KEY}&language=en-US&query=${global.search.term}`);
+
+  const data = await response.json();
+ hideSpinner();
+
+  return data;
 }
 
 function showSpinner() {
@@ -295,6 +338,16 @@ function highlightActiveLink() {
             link.classList.add('active');
         }
     })
+}
+
+//Show alert
+function showAlert(message, className) {
+  const alertEl = document.createElement('div');
+  alertEl.classList.add('alert', className);
+  alertEl.appendChild(document.createTextNode(message));
+  document.querySelector('#alert').appendChild(alertEl);
+
+  setTimeout(()=> alertEl.remove(),3000)
 }
 
 function addCommasToNumber(number) {
@@ -319,12 +372,13 @@ function init() {
             displayMovieDetails();
             break;
         case '/tv-details.html':
-        console.log('TV Details');
-        displayShowDetails();
-            break;
+           console.log('TV Details');
+           displayShowDetails();
+           break;
         case '/search.html':
-            console.log('Search');
-            break;
+           console.log('Search');
+           search();
+           break;
     }
 
     highlightActiveLink();
